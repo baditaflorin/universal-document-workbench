@@ -12,6 +12,8 @@
 
 node_modules/
 coverage/
+test-results/
+playwright-report/
 dist/
 dist-data/
 tmp/
@@ -33,4 +35,3 @@ __pycache__/
 venv/
 
 deploy/.env
-

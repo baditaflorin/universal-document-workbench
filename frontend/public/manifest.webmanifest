@@ -1,0 +1,16 @@
+{
+  "name": "Universal Document Workbench",
+  "short_name": "Doc Workbench",
+  "start_url": "/universal-document-workbench/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/universal-document-workbench/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

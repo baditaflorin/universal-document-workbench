@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Universal Document Workbench">
+  <rect width="128" height="128" rx="18" fill="#172033"/>
+  <path d="M35 24h42l18 18v62H35z" fill="#f8fafc"/>
+  <path d="M77 24v20h20" fill="#d7dde8"/>
+  <path d="M48 57h34M48 71h34M48 85h22" stroke="#0f766e" stroke-width="8" stroke-linecap="round"/>
+</svg>
+
