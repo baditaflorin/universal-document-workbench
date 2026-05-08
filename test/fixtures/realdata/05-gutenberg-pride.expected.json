@@ -1,0 +1,10 @@
+{
+  "id": "gutenberg-pride",
+  "source": "https://www.gutenberg.org/ebooks/1342.epub.noimages",
+  "sha256": "726867a68ce98b4a26a66eff702856404853f0364b88fe68568ed28f398af9a9",
+  "expected_shape": "ebook",
+  "min_shape_confidence": 0.85,
+  "required_evidence": ["epub_container", "mimetype_epub"],
+  "required_warnings": ["ebook_structure_flattened"]
+}
+

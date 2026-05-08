@@ -1,0 +1,10 @@
+{
+  "id": "empty-export",
+  "source": "local empty text file representing a failed export",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "expected_shape": "empty_text",
+  "min_shape_confidence": 1.0,
+  "required_evidence": ["zero_bytes"],
+  "required_warnings": ["empty_after_normalization"]
+}
+

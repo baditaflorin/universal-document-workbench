@@ -1,0 +1,10 @@
+{
+  "id": "arabic-legal",
+  "source": "https://hz.turathalanbiaa.com/public/735.pdf",
+  "sha256": "00be7a4cab71fa9b8b5f90e93a0562f6b96fc0ce67705643cfea513162a8cc58",
+  "expected_shape": "non_english_pdf",
+  "min_shape_confidence": 0.55,
+  "required_evidence": ["pdf_magic", "rtl_or_non_latin_hint"],
+  "required_warnings": ["unsupported_language_model"]
+}
+

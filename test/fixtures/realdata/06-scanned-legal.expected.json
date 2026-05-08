@@ -1,0 +1,10 @@
+{
+  "id": "scanned-legal",
+  "source": "https://archive.org/download/cu31924016985420/cu31924016985420.pdf",
+  "sha256": "7975b5a819f387e1049ebd8b9bb0430a931817b9729f6fdcd1b4d4783537ed2b",
+  "expected_shape": "scanned_pdf",
+  "min_shape_confidence": 0.65,
+  "required_evidence": ["pdf_magic", "many_image_xobjects"],
+  "required_warnings": ["ocr_quality_unknown"]
+}
+

@@ -1,0 +1,10 @@
+{
+  "id": "apple-10k",
+  "source": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm",
+  "sha256": "24a830a0f1256e371d36a1f7f72e5e85a38037d1de2f6f966eb8457db42ff6d6",
+  "expected_shape": "sec_filing",
+  "min_shape_confidence": 0.85,
+  "required_evidence": ["inline_xbrl", "sec_cik"],
+  "required_warnings": ["structured_filing_flattened"]
+}
+

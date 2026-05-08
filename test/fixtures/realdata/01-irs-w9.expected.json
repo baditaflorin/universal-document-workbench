@@ -1,0 +1,10 @@
+{
+  "id": "irs-w9",
+  "source": "https://www.irs.gov/pub/irs-pdf/fw9.pdf",
+  "sha256": "2d420cbb4123dcf1fb82595b2359cfbb5d81f00b9df9d359fcc7af361d093f53",
+  "expected_shape": "form_pdf",
+  "min_shape_confidence": 0.75,
+  "required_evidence": ["pdf_magic", "acroform"],
+  "required_warnings": ["form_fields_not_extracted"]
+}
+

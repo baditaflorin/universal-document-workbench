@@ -1,0 +1,10 @@
+{
+  "id": "nyc-311",
+  "source": "https://data.cityofnewyork.us/resource/erm2-nwe9.csv?$limit=1000&$order=created_date%20DESC",
+  "sha256": "7e4cd7da4881eff2f4669d8f36ab9056fc8704f181a6415b86b60e3e6eb8a802",
+  "expected_shape": "table_data",
+  "min_shape_confidence": 0.85,
+  "required_evidence": ["csv_delimiter_comma", "consistent_columns"],
+  "required_warnings": ["table_export_flattened"]
+}
+

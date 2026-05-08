@@ -1,0 +1,10 @@
+{
+  "id": "sec-financial-report",
+  "source": "https://www.sec.gov/Archives/edgar/data/1626450/000156459020043288/Financial_Report.xlsx",
+  "sha256": "c5bcff9db4913e8a9da4953fa127544bd42546624fcdacb189e68912b757acba",
+  "expected_shape": "spreadsheet",
+  "min_shape_confidence": 0.85,
+  "required_evidence": ["xlsx_zip", "workbook_parts"],
+  "required_warnings": ["spreadsheet_structure_flattened"]
+}
+

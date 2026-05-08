@@ -1,0 +1,10 @@
+{
+  "id": "apple-submission",
+  "source": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/0000320193-24-000123.txt",
+  "sha256": "347c28e05fd61467c0ce9f4c0b8a264670011b9afb07930e2233a46dbb73914b",
+  "expected_shape": "sec_submission",
+  "min_shape_confidence": 0.85,
+  "required_evidence": ["sec_submission_header", "sec_document_markers"],
+  "required_warnings": ["multi_document_submission"]
+}
+
