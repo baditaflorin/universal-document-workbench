@@ -1,0 +1,198 @@
+openapi: 3.1.0
+info:
+  title: Universal Document Workbench API
+  version: 0.1.0
+  description: Runtime document extraction, OCR, NLP, and conversion API.
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: Health response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /readyz:
+    get:
+      operationId: getReadiness
+      responses:
+        "200":
+          description: Ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: Missing runtime dependency
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/version:
+    get:
+      operationId: getVersion
+      responses:
+        "200":
+          description: Build version
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [version, commit]
+                properties:
+                  version:
+                    type: string
+                  commit:
+                    type: string
+  /api/v1/documents:
+    post:
+      operationId: processDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Processed document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResult"
+        "400":
+          description: Missing or empty upload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Upload too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Processing failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status, version, commit]
+      properties:
+        status:
+          type: string
+        version:
+          type: string
+        commit:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    Entity:
+      type: object
+      required: [text, label, start, end]
+      properties:
+        text:
+          type: string
+        label:
+          type: string
+        start:
+          type: integer
+        end:
+          type: integer
+    ExportArtifact:
+      type: object
+      required: [format, filename, mime_type, base64, size_bytes]
+      properties:
+        format:
+          type: string
+          enum: [markdown, docx, epub]
+        filename:
+          type: string
+        mime_type:
+          type: string
+        base64:
+          type: string
+        size_bytes:
+          type: integer
+    DocumentResult:
+      type: object
+      required:
+        - id
+        - filename
+        - mime_type
+        - size_bytes
+        - text
+        - metadata
+        - entities
+        - people
+        - dates
+        - outputs
+        - tool_versions
+        - warnings
+        - processing_ms
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        mime_type:
+          type: string
+        size_bytes:
+          type: integer
+        text:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        entities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Entity"
+        people:
+          type: array
+          items:
+            type: string
+        dates:
+          type: array
+          items:
+            type: string
+        outputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExportArtifact"
+        tool_versions:
+          type: object
+          additionalProperties:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        processing_ms:
+          type: integer
+
