@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 APP_NAME := universal-document-workbench
 APP_VERSION ?= 0.1.0
-GIT_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
+GIT_COMMIT ?= $(shell git log --format=%h --invert-grep --extended-regexp --grep='^chore: (publish|refresh pages build)' -1 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo dev)
 IMAGE ?= ghcr.io/baditaflorin/$(APP_NAME)
 
 .PHONY: help install-hooks dev build build-frontend build-backend data test test-go test-frontend test-integration smoke lint fmt pages-preview docker-build docker-push release compose-up compose-down clean hooks-pre-commit hooks-commit-msg hooks-pre-push hooks-post-checkout
@@ -47,7 +47,7 @@ lint: ## all linters
 	@if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run; else echo "golangci-lint not installed; skipping"; fi
 	npm --prefix frontend run lint
 	npm --prefix frontend run fmt:check
-	npm --prefix frontend run build
+	npm --prefix frontend run typecheck
 
 fmt: ## autoformat
 	gofmt -w cmd internal pkg test
@@ -81,7 +81,7 @@ hooks-pre-commit: ## run pre-commit checks
 	@if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run; else echo "golangci-lint not installed; skipping"; fi
 	npm --prefix frontend run lint
 	npm --prefix frontend run fmt:check
-	npm --prefix frontend run build
+	npm --prefix frontend run typecheck
 	@if command -v gitleaks >/dev/null 2>&1; then gitleaks protect --staged --verbose; else echo "gitleaks not installed; skipping secret scan"; fi
 
 hooks-commit-msg: ## validate Conventional Commits
