@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     outDir: "../docs",
     emptyOutDir: false,
-    sourcemap: true,
+    sourcemap: false,
     rollupOptions: {
       output: {
         assetFileNames: "assets/[name]-[hash][extname]",
