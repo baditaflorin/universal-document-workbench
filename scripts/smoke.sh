@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WEB_PORT="${WEB_PORT:-43173}"
 API_PORT="${API_PORT:-43180}"
 BASE_PATH="/universal-document-workbench"
+SMOKE_DOCS="$ROOT_DIR/tmp/smoke-docs"
 
 cleanup() {
   if [[ -n "${API_PID:-}" ]]; then
@@ -42,14 +43,15 @@ wait_for "http://127.0.0.1:${API_PORT}/readyz"
 wait_for "http://127.0.0.1:${API_PORT}/metrics"
 
 VITE_API_BASE_URL="http://127.0.0.1:${API_PORT}" \
+VITE_OUT_DIR="$SMOKE_DOCS" \
 APP_VERSION="${APP_VERSION:-0.1.0}" \
 GIT_COMMIT="${GIT_COMMIT:-$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || echo dev)}" \
   "$ROOT_DIR/scripts/build-pages.sh"
 
-test -f "$ROOT_DIR/docs/index.html"
-test -f "$ROOT_DIR/docs/404.html"
+test -f "$SMOKE_DOCS/index.html"
+test -f "$SMOKE_DOCS/404.html"
 
-node "$ROOT_DIR/scripts/static-server.mjs" "$ROOT_DIR/docs" "$WEB_PORT" "$BASE_PATH" &
+node "$ROOT_DIR/scripts/static-server.mjs" "$SMOKE_DOCS" "$WEB_PORT" "$BASE_PATH" &
 WEB_PID=$!
 sleep 0.2
 kill -0 "$WEB_PID" 2>/dev/null

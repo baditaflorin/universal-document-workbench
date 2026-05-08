@@ -5,7 +5,7 @@ export default defineConfig({
   base: "/universal-document-workbench/",
   plugins: [react()],
   build: {
-    outDir: "../docs",
+    outDir: process.env.VITE_OUT_DIR ?? "../docs",
     emptyOutDir: false,
     sourcemap: false,
     rollupOptions: {
