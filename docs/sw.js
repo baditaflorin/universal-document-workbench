@@ -1,4 +1,4 @@
-const CACHE_NAME = "universal-document-workbench-v0.2.0";
+const CACHE_NAME = "universal-document-workbench-v0.3.0";
 const APP_SHELL = [
   "/universal-document-workbench/",
   "/universal-document-workbench/manifest.webmanifest",
