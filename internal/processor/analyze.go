@@ -244,7 +244,25 @@ func finalizeAnalysis(sourceSHA string, data []byte, analysis DocumentAnalysis, 
 	if analysis.Table.Confidence.Label == "" {
 		analysis.Table.Confidence = NewConfidence(0)
 	}
+	if analysis.Table.HeaderNames == nil {
+		analysis.Table.HeaderNames = []string{}
+	}
+	if analysis.Fields == nil {
+		analysis.Fields = []FieldInference{}
+	}
+	if analysis.Decisions == nil {
+		analysis.Decisions = []Decision{}
+	}
+	if analysis.Evidence == nil {
+		analysis.Evidence = []string{}
+	}
 	analysis.ExpectedActions = expectedActions(analysis, warnings)
+	if analysis.ExpectedActions == nil {
+		analysis.ExpectedActions = []string{}
+	}
+	if anomalies == nil {
+		anomalies = []Diagnostic{}
+	}
 	return SourceAnalysis{
 		Bytes:      data,
 		SHA256:     sourceSHA,
