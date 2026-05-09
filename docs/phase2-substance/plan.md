@@ -48,3 +48,6 @@ Items are ranked by impact on the 10 real-data fixtures from `realdata-audit.md`
 8. Fixture, fuzz, determinism, and performance tests.
 9. Audit/postmortem/pass-rate update, version bump, publish.
 
+## Completion Snapshot
+
+Implemented in v0.2.0. The selected items are covered by fixture tests, ADRs 0040-0049, frontend analysis/debug UI, structured API errors, deterministic analyzer IDs, provenance-bearing exports, and the Phase 2 postmortem.

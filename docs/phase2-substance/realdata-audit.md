@@ -68,3 +68,21 @@ The audit below follows the current v1 implementation path: GitHub Pages upload 
 - No server-side persistence beyond temporary processing state.
 - No collaborative editing or cross-device sync.
 
+## Implementation Result
+
+Phase 2 converted this audit into executable fixture tests in `test/fixtures/realdata/`.
+
+| Fixture | Before | After |
+|---|---|---|
+| IRS W-9 PDF | Generic PDF text | `form_pdf`, high confidence, form-field warning |
+| Apple 10-K HTML | Generic flattened text | `sec_filing`, high confidence, XBRL/SEC evidence |
+| Apple SEC submission | One giant blob | `sec_submission`, high confidence, multi-document warning |
+| SEC workbook | Flat spreadsheet text | `spreadsheet`, high confidence, structure-loss warning |
+| Gutenberg EPUB | Generic archive/text | `ebook`, high confidence, structure-loss warning |
+| Scanned legal PDF | OCR risk hidden | `scanned_pdf`, medium confidence, OCR-quality warning |
+| Arabic PDF | English NLP attempted silently | `non_english_pdf`, medium confidence, unsupported-language warning |
+| SJSU PDF sample | Generic PDF | `pdf_document`, medium confidence; the sampled file is not actually encrypted |
+| NYC 311 CSV | Generic document | `table_data`, high confidence, delimiter/field inference |
+| Empty export | Empty-looking success | `empty_text`, high confidence, explicit empty warning |
+
+Pass rate: 3/10 before the audit, 10/10 after the Phase 2 analyzer and UI/API wiring. Synthetic edge coverage adds empty, encrypted marker, truncated PDF, semicolon CSV, and BOM/CRLF/NBSP text inputs.

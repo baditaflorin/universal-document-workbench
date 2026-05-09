@@ -8,7 +8,7 @@ Support development: https://www.paypal.com/paypalme/florinbadita
 
 ![Pages](https://img.shields.io/badge/GitHub%20Pages-live-0f766e)
 ![License](https://img.shields.io/badge/license-MIT-172033)
-![Version](https://img.shields.io/badge/version-0.1.0-6d28d9)
+![Version](https://img.shields.io/badge/version-0.2.0-6d28d9)
 
 Drop documents into a static GitHub Pages UI and process them through a Docker backend that extracts text and metadata, OCRs scans, detects entities, and exports Markdown, DOCX, and EPUB.
 
@@ -74,4 +74,4 @@ deploy/README.md
 
 ## Status
 
-The v1 target is a complete local/self-hosted workbench. GitHub Pages is live from the first scaffold commit, while the Docker backend is deployed separately.
+The v0.2.0 target adds the Phase 2 substance engine: document-shape inference, confidence, anomalies, provenance, deterministic IDs, actionable errors, and real-data fixture coverage. GitHub Pages is live, while the Docker backend is deployed separately.

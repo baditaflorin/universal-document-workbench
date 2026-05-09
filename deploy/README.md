@@ -33,7 +33,7 @@ docker compose -f deploy/docker-compose.yml pull app
 docker compose -f deploy/docker-compose.yml up -d app
 ```
 
-To pin a specific release, edit the image tag in `deploy/docker-compose.yml` to a semver tag such as `v0.1.0`.
+To pin a specific release, edit the image tag in `deploy/docker-compose.yml` to a semver tag such as `v0.2.0`.
 
 ## Logs
 
@@ -41,4 +41,3 @@ To pin a specific release, edit the image tag in `deploy/docker-compose.yml` to 
 docker compose -f deploy/docker-compose.yml logs -f app
 docker compose -f deploy/docker-compose.yml logs -f nginx
 ```
-
