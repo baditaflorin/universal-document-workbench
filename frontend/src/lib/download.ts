@@ -18,6 +18,10 @@ export function downloadBase64(
   downloadBlob(filename, new Blob([bytes], { type: mimeType }));
 }
 
+export function downloadJSON(filename: string, value: unknown): void {
+  downloadText(filename, JSON.stringify(value, null, 2), "application/json");
+}
+
 function downloadBlob(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
