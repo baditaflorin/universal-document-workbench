@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 message_file="${1:-}"
@@ -15,4 +15,3 @@ if [[ ! "$first_line" =~ $pattern ]]; then
   echo "Got: $first_line" >&2
   exit 1
 fi
-

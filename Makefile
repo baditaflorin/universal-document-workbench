@@ -15,15 +15,15 @@ install-hooks: ## wire .githooks
 	chmod +x .githooks/* scripts/*.sh
 
 dev: ## run locally
-	./scripts/dev.sh
+	. ./scripts/dev.sh
 
 build: build-frontend build-backend ## build frontend and backend
 
 build-frontend: ## build frontend into docs
-	APP_VERSION=$(APP_VERSION) GIT_COMMIT=$(GIT_COMMIT) ./scripts/build-pages.sh
+	APP_VERSION=$(APP_VERSION) GIT_COMMIT=$(GIT_COMMIT) . ./scripts/build-pages.sh
 
 build-backend: ## compile Go backend
-	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.appVersion=$(APP_VERSION) -X main.appCommit=$(GIT_COMMIT)" -o bin/$(APP_NAME) ./cmd/server
+	CGO_ENABLED=0 go build -ldflags="-s -w -X main.appVersion=$(APP_VERSION) -X main.appCommit=$(GIT_COMMIT)" -o bin/udw-server ./cmd/server
 
 data: ## no-op for Mode C
 	@echo "Mode C has no static data pipeline."
@@ -40,7 +40,7 @@ test-integration: ## run integration tests
 	CGO_ENABLED=0 go test -tags=integration ./test/integration/...
 
 smoke: ## run local smoke tests
-	./scripts/smoke.sh
+	. ./scripts/smoke.sh
 
 lint: ## all linters
 	CGO_ENABLED=0 go vet ./...

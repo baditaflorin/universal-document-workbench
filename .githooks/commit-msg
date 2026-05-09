@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
 MESSAGE_FILE="$1" make hooks-commit-msg
-
