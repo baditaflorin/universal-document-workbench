@@ -3,8 +3,6 @@ package processor
 import (
 	"context"
 	"encoding/base64"
-	"os"
-	"strings"
 	"time"
 )
 
@@ -15,40 +13,22 @@ type StubProcessor struct {
 
 func (p StubProcessor) Process(_ context.Context, upload Upload) (Result, error) {
 	start := time.Now()
-	content, err := os.ReadFile(upload.Path)
+	source, err := AnalyzeUpload(upload)
 	if err != nil {
 		return Result{}, err
 	}
 
-	text := strings.TrimSpace(string(content))
-	if text == "" {
-		text = "Florin met Ada Lovelace in Bucharest on 8 May 2026."
-	}
+	text := source.Normalized.Text
+	entities, people, dates := simpleEntityGuess(text)
+	markdown := buildMarkdown(upload.Filename, text, source)
+	toolVersions := p.ToolVersions(context.Background())
 
-	markdown := "# Extracted Document\n\n" + text + "\n"
-	return Result{
-		ID:        "stub-document",
-		Filename:  upload.Filename,
-		MimeType:  upload.MimeType,
-		SizeBytes: upload.Size,
-		Text:      text,
-		Metadata: map[string]string{
-			"Content-Type": upload.MimeType,
-			"Processor":    "stub",
-		},
-		Entities: []Entity{
-			{Text: "Florin", Label: "PERSON", Start: 0, End: 6},
-			{Text: "Ada Lovelace", Label: "PERSON", Start: 11, End: 23},
-			{Text: "Bucharest", Label: "GPE", Start: 27, End: 36},
-			{Text: "8 May 2026", Label: "DATE", Start: 40, End: 50},
-		},
-		People:       []string{"Ada Lovelace", "Florin"},
-		Dates:        []string{"8 May 2026"},
-		Outputs:      stubOutputs(upload.Filename, markdown),
-		ToolVersions: p.ToolVersions(context.Background()),
-		Warnings:     []string{"Stub processor mode is active."},
-		ProcessingMS: time.Since(start).Milliseconds(),
-	}, nil
+	return buildBaseResult(upload, source, upload.MimeType, text, map[string]string{
+		"Processor": "stub",
+	}, entities, people, dates, stubOutputs(upload.Filename, markdown), toolVersions, p.Version, p.Commit, map[string]string{
+		"entity_model": "deterministic_regex_stub",
+		"ocr_language": "none",
+	}, start, []string{"stub_processor_mode"}), nil
 }
 
 func (p StubProcessor) Ready(_ context.Context) error {

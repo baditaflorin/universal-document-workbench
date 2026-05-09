@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 APP_NAME := universal-document-workbench
-APP_VERSION ?= 0.1.0
+APP_VERSION ?= 0.2.0
 GIT_COMMIT ?= $(shell git log --format=%h --invert-grep --extended-regexp --grep='^chore: (publish|refresh pages build)' -1 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo dev)
 IMAGE ?= ghcr.io/baditaflorin/$(APP_NAME)
 

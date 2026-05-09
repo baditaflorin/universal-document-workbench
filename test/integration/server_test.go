@@ -23,8 +23,8 @@ func TestReadyEndpointWithStubProcessor(t *testing.T) {
 		WorkDir:        t.TempDir(),
 		RequestTimeout: time.Second,
 		ToolTimeout:    time.Second,
-	}, processor.StubProcessor{Version: "0.1.0", Commit: "test"}, version.Info{
-		Version: "0.1.0",
+	}, processor.StubProcessor{Version: "0.2.0", Commit: "test"}, version.Info{
+		Version: "0.2.0",
 		Commit:  "test",
 	}, nil)
 

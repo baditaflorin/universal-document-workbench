@@ -8,7 +8,7 @@ COPY go.mod go.sum* ./
 RUN go mod download
 
 COPY . .
-ARG VERSION=0.1.0
+ARG VERSION=0.2.0
 ARG COMMIT=dev
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -trimpath \
@@ -17,7 +17,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 
 FROM python:3.12-slim-bookworm AS runtime
 ARG TIKA_VERSION=3.3.0
-ARG VERSION=0.1.0
+ARG VERSION=0.2.0
 ARG COMMIT=dev
 
 LABEL org.opencontainers.image.title="Universal Document Workbench" \
@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
       openjdk-17-jre-headless \
       pandoc \
+      poppler-utils \
       tini \
       tesseract-ocr \
       tesseract-ocr-eng \

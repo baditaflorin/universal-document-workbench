@@ -30,6 +30,10 @@ type Server struct {
 }
 
 func NewServer(cfg config.Config, docProcessor processor.Processor, info version.Info, logger *slog.Logger) *Server {
+	if logger == nil {
+		logger = slog.New(slog.NewTextHandler(io.Discard, nil))
+	}
+
 	return &Server{
 		cfg:       cfg,
 		processor: docProcessor,
@@ -120,11 +124,6 @@ func (s *Server) handleDocumentUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	if header.Size <= 0 {
-		writeError(w, http.StatusBadRequest, "empty_file", "Uploaded file is empty.")
-		return
-	}
-
 	upload, cleanup, err := s.saveUpload(file, header.Filename, header.Header.Get("Content-Type"), header.Size)
 	if err != nil {
 		s.logger.Error("failed to save upload", "error", err)
@@ -139,7 +138,7 @@ func (s *Server) handleDocumentUpload(w http.ResponseWriter, r *http.Request) {
 	result, err := s.processor.Process(ctx, upload)
 	if err != nil {
 		s.logger.Error("document processing failed", "error", err)
-		writeError(w, http.StatusUnprocessableEntity, "processing_failed", err.Error())
+		writeProcessorError(w, err)
 		return
 	}
 

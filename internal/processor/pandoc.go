@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-func (p ExternalProcessor) exportAll(ctx context.Context, id, filename, text string) ([]ExportArtifact, []string) {
+func (p ExternalProcessor) exportAll(ctx context.Context, id, filename, text string, source SourceAnalysis) ([]ExportArtifact, []string) {
 	baseName := cleanBaseName(filename)
-	markdown := buildMarkdown(filename, text)
+	markdown := buildMarkdown(filename, text, source)
 	outputs := []ExportArtifact{
 		encodeArtifact("markdown", baseName+".md", "text/markdown;charset=utf-8", []byte(markdown)),
 	}
@@ -55,11 +55,33 @@ func (p ExternalProcessor) exportAll(ctx context.Context, id, filename, text str
 	return outputs, warnings
 }
 
-func buildMarkdown(filename, text string) string {
+func buildMarkdown(filename, text string, source SourceAnalysis) string {
 	title := strings.TrimSuffix(cleanBaseName(filename), filepath.Ext(filename))
 	if title == "" {
 		title = "Extracted Document"
 	}
 
-	return "# " + title + "\n\n" + strings.TrimSpace(text) + "\n"
+	var builder strings.Builder
+	builder.WriteString("---\n")
+	builder.WriteString("schema_version: " + SchemaVersion + "\n")
+	builder.WriteString("source_sha256: " + source.SHA256 + "\n")
+	builder.WriteString("document_shape: " + source.Analysis.Shape + "\n")
+	builder.WriteString("shape_confidence: " + source.Analysis.Confidence.Label + "\n")
+	builder.WriteString("strategy: " + source.Analysis.Strategy + "\n")
+	if len(source.Warnings) > 0 {
+		builder.WriteString("warnings:\n")
+		for _, warning := range source.Warnings {
+			builder.WriteString("  - " + warning + "\n")
+		}
+	}
+	builder.WriteString("---\n\n")
+	builder.WriteString("# " + title + "\n\n")
+	if strings.TrimSpace(text) == "" {
+		builder.WriteString("> No text was extracted. Review the warnings and source file before using this export.\n")
+		return builder.String()
+	}
+
+	builder.WriteString(strings.TrimSpace(text))
+	builder.WriteString("\n")
+	return builder.String()
 }

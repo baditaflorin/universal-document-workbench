@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Universal Document Workbench API
-  version: 0.1.0
+  version: 0.2.0
   description: Runtime document extraction, OCR, NLP, and conversion API.
 servers:
   - url: http://localhost:8080
@@ -70,7 +70,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/DocumentResult"
         "400":
-          description: Missing or empty upload
+          description: Missing upload or malformed request
           content:
             application/json:
               schema:
@@ -105,15 +105,36 @@ components:
       properties:
         error:
           type: object
-          required: [code, message]
+          required: [code, message, what, why, now_what, severity, retryable]
           properties:
             code:
               type: string
             message:
               type: string
+            what:
+              type: string
+            why:
+              type: string
+            now_what:
+              type: string
+            severity:
+              type: string
+            retryable:
+              type: boolean
+    Confidence:
+      type: object
+      required: [score, label]
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        label:
+          type: string
+          enum: [low, medium, high]
     Entity:
       type: object
-      required: [text, label, start, end]
+      required: [text, label, start, end, confidence]
       properties:
         text:
           type: string
@@ -123,9 +144,11 @@ components:
           type: integer
         end:
           type: integer
+        confidence:
+          $ref: "#/components/schemas/Confidence"
     ExportArtifact:
       type: object
-      required: [format, filename, mime_type, base64, size_bytes]
+      required: [format, filename, mime_type, base64, size_bytes, confidence]
       properties:
         format:
           type: string
@@ -138,6 +161,183 @@ components:
           type: string
         size_bytes:
           type: integer
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+    Diagnostic:
+      type: object
+      required: [code, severity, message, evidence]
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, error]
+        message:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+    FieldInference:
+      type: object
+      required: [name, type, confidence, evidence]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        evidence:
+          type: array
+          items:
+            type: string
+    TableAnalysis:
+      type: object
+      required: [detected, delimiter, rows, columns, confidence, header_names]
+      properties:
+        detected:
+          type: boolean
+        delimiter:
+          type: string
+        rows:
+          type: integer
+        columns:
+          type: integer
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        header_names:
+          type: array
+          items:
+            type: string
+    Decision:
+      type: object
+      required: [code, message, confidence, evidence]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        evidence:
+          type: array
+          items:
+            type: string
+    DocumentAnalysis:
+      type: object
+      required:
+        - shape
+        - shape_label
+        - strategy
+        - needs_ocr
+        - encrypted
+        - empty
+        - partial
+        - language_hint
+        - script_hint
+        - page_count
+        - text_bytes
+        - table
+        - fields
+        - decisions
+        - confidence
+        - evidence
+        - expected_actions
+      properties:
+        shape:
+          type: string
+        shape_label:
+          type: string
+        strategy:
+          type: string
+        needs_ocr:
+          type: boolean
+        encrypted:
+          type: boolean
+        empty:
+          type: boolean
+        partial:
+          type: boolean
+        language_hint:
+          type: string
+        script_hint:
+          type: string
+        page_count:
+          type: integer
+        text_bytes:
+          type: integer
+        table:
+          $ref: "#/components/schemas/TableAnalysis"
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldInference"
+        decisions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Decision"
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        evidence:
+          type: array
+          items:
+            type: string
+        expected_actions:
+          type: array
+          items:
+            type: string
+    Provenance:
+      type: object
+      required:
+        - schema_version
+        - source_sha256
+        - source_bytes
+        - source_filename
+        - generated_at
+        - app_version
+        - commit
+        - strategy
+        - parameters
+        - tool_versions
+        - normalizations
+        - runtime_only_fields
+        - determinism_contract
+      properties:
+        schema_version:
+          type: string
+        source_sha256:
+          type: string
+        source_bytes:
+          type: integer
+        source_filename:
+          type: string
+        generated_at:
+          type: string
+        app_version:
+          type: string
+        commit:
+          type: string
+        strategy:
+          type: string
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
+        tool_versions:
+          type: object
+          additionalProperties:
+            type: string
+        normalizations:
+          type: array
+          items:
+            type: string
+        runtime_only_fields:
+          type: array
+          items:
+            type: string
+        determinism_contract:
+          type: string
     DocumentResult:
       type: object
       required:
@@ -153,6 +353,10 @@ components:
         - outputs
         - tool_versions
         - warnings
+        - analysis
+        - confidence
+        - anomalies
+        - provenance
         - processing_ms
       properties:
         id:
@@ -193,6 +397,17 @@ components:
           type: array
           items:
             type: string
+        analysis:
+          $ref: "#/components/schemas/DocumentAnalysis"
+        confidence:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Confidence"
+        anomalies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Diagnostic"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
         processing_ms:
           type: integer
-

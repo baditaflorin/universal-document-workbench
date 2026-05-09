@@ -2,15 +2,14 @@ package processor
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -31,6 +30,8 @@ type ExternalProcessor struct {
 	runner CommandRunner
 }
 
+var externalToolVersionCache sync.Map
+
 func NewExternalProcessor(cfg ExternalConfig) ExternalProcessor {
 	return ExternalProcessor{
 		cfg:    cfg,
@@ -44,9 +45,19 @@ func (p ExternalProcessor) Process(ctx context.Context, upload Upload) (Result, 
 		return Result{}, err
 	}
 
-	id, err := newID()
+	source, err := AnalyzeUpload(upload)
 	if err != nil {
 		return Result{}, err
+	}
+	if source.Analysis.Encrypted {
+		return Result{}, ProcessingError{
+			Code:      "encrypted_pdf",
+			What:      "This PDF is encrypted.",
+			Why:       "The file contains a PDF encryption dictionary, so text cannot be extracted without unlocking it first.",
+			NowWhat:   "Upload an unlocked copy, or decrypt the PDF locally and try again.",
+			Severity:  "recoverable",
+			Retryable: false,
+		}
 	}
 
 	mimeType := upload.MimeType
@@ -58,46 +69,50 @@ func (p ExternalProcessor) Process(ctx context.Context, upload Upload) (Result, 
 	text, tikaWarnings, err := p.extractText(ctx, upload.Path)
 	warnings = append(warnings, tikaWarnings...)
 	if err != nil {
-		return Result{}, err
+		return Result{}, ProcessingError{
+			Code:      "text_extraction_failed",
+			What:      "Text extraction failed.",
+			Why:       "Apache Tika could not parse the uploaded file into text.",
+			NowWhat:   "Try a simpler export of the file, or upload the original source document if this copy is damaged.",
+			Severity:  "recoverable",
+			Retryable: true,
+			Err:       err,
+		}
 	}
+	text = NormalizeText(text).Text
 
 	metadata, metadataWarnings := p.extractMetadata(ctx, upload.Path)
 	warnings = append(warnings, metadataWarnings...)
-	if metadata == nil {
-		metadata = map[string]string{}
-	}
-	metadata["Content-Type"] = mimeType
 
 	if strings.TrimSpace(text) == "" && strings.HasPrefix(mimeType, "image/") {
 		ocrText, err := p.extractImageOCR(ctx, upload.Path)
 		if err != nil {
 			warnings = append(warnings, err.Error())
 		} else {
-			text = ocrText
+			text = NormalizeText(ocrText).Text
+		}
+	}
+
+	if strings.TrimSpace(text) == "" && source.Analysis.NeedsOCR && source.Analysis.Shape == "scanned_pdf" {
+		ocrText, err := p.extractPDFOCR(ctx, upload.Path, filepath.Join(p.cfg.WorkDir, source.StableID, "ocr"))
+		if err != nil {
+			warnings = append(warnings, "pdf_ocr_failed: "+err.Error())
+		} else {
+			text = NormalizeText(ocrText).Text
 		}
 	}
 
 	entities, people, dates, entityWarnings := p.detectEntities(ctx, text)
 	warnings = append(warnings, entityWarnings...)
 
-	outputs, exportWarnings := p.exportAll(ctx, id, upload.Filename, text)
+	outputs, exportWarnings := p.exportAll(ctx, source.StableID, upload.Filename, text, source)
 	warnings = append(warnings, exportWarnings...)
 
-	return Result{
-		ID:           id,
-		Filename:     upload.Filename,
-		MimeType:     mimeType,
-		SizeBytes:    upload.Size,
-		Text:         text,
-		Metadata:     metadata,
-		Entities:     entities,
-		People:       people,
-		Dates:        dates,
-		Outputs:      outputs,
-		ToolVersions: p.ToolVersions(ctx),
-		Warnings:     warnings,
-		ProcessingMS: time.Since(start).Milliseconds(),
-	}, nil
+	toolVersions := p.ToolVersions(ctx)
+	return buildBaseResult(upload, source, mimeType, text, metadata, entities, people, dates, outputs, toolVersions, p.cfg.Version, p.cfg.Commit, map[string]string{
+		"entity_model": p.cfg.SpacyModel,
+		"ocr_language": p.cfg.TesseractLang,
+	}, start, warnings), nil
 }
 
 func (p ExternalProcessor) Ready(ctx context.Context) error {
@@ -105,7 +120,7 @@ func (p ExternalProcessor) Ready(ctx context.Context) error {
 		return fmt.Errorf("tika jar is not available: %w", err)
 	}
 
-	for _, name := range []string{"java", "tesseract", "python3", p.cfg.PandocPath} {
+	for _, name := range []string{"java", "pdftoppm", "tesseract", "python3", p.cfg.PandocPath} {
 		if _, err := exec.LookPath(name); err != nil {
 			return fmt.Errorf("%s is not available: %w", name, err)
 		}
@@ -119,6 +134,13 @@ func (p ExternalProcessor) Ready(ctx context.Context) error {
 }
 
 func (p ExternalProcessor) ToolVersions(ctx context.Context) map[string]string {
+	cacheKey := strings.Join([]string{p.cfg.Version, p.cfg.Commit, p.cfg.PandocPath, p.cfg.TikaJar}, "|")
+	if cached, ok := externalToolVersionCache.Load(cacheKey); ok {
+		if versions, ok := cached.(map[string]string); ok {
+			return copyStringMap(versions)
+		}
+	}
+
 	versions := map[string]string{
 		"backend": p.cfg.Version,
 		"commit":  p.cfg.Commit,
@@ -127,6 +149,7 @@ func (p ExternalProcessor) ToolVersions(ctx context.Context) map[string]string {
 
 	commands := map[string][]string{
 		"java":      {"java", "-version"},
+		"pdftoppm":  {"pdftoppm", "-v"},
 		"tesseract": {"tesseract", "--version"},
 		"pandoc":    {p.cfg.PandocPath, "--version"},
 		"python":    {"python3", "--version"},
@@ -145,7 +168,8 @@ func (p ExternalProcessor) ToolVersions(ctx context.Context) map[string]string {
 		versions[key] = firstLine(output)
 	}
 
-	return versions
+	externalToolVersionCache.Store(cacheKey, copyStringMap(versions))
+	return copyStringMap(versions)
 }
 
 func detectMimeType(path string) string {
@@ -162,14 +186,6 @@ func detectMimeType(path string) string {
 	}
 
 	return http.DetectContentType(buffer[:n])
-}
-
-func newID() (string, error) {
-	bytes := make([]byte, 16)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
 }
 
 func cleanBaseName(filename string) string {

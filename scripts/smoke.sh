@@ -44,7 +44,7 @@ wait_for "http://127.0.0.1:${API_PORT}/metrics"
 
 VITE_API_BASE_URL="http://127.0.0.1:${API_PORT}" \
 VITE_OUT_DIR="$SMOKE_DOCS" \
-APP_VERSION="${APP_VERSION:-0.1.0}" \
+APP_VERSION="${APP_VERSION:-0.2.0}" \
 GIT_COMMIT="${GIT_COMMIT:-$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || echo dev)}" \
   "$ROOT_DIR/scripts/build-pages.sh"
 

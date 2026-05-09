@@ -1,19 +1,24 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  BarChart3,
   Braces,
   CheckCircle2,
+  CircleAlert,
   Download,
   ExternalLink,
   FileArchive,
   FileText,
+  Gauge,
   Github,
   Heart,
   Loader2,
   ScanText,
   Server,
+  ShieldCheck,
   Tags,
   Upload,
+  XCircle,
 } from "lucide-react";
 import type { DragEvent, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
@@ -21,21 +26,38 @@ import { appConfig } from "../../../lib/config";
 import { downloadBase64, downloadText } from "../../../lib/download";
 import { formatBytes, formatDuration } from "../../../lib/format";
 import { useLocalStorage } from "../../../lib/useLocalStorage";
-import { fetchHealth, processDocument } from "../api";
-import type { DocumentResult, ExportArtifact } from "../types";
+import { DocumentApiError, fetchHealth, processDocument } from "../api";
+import type {
+  Confidence,
+  Diagnostic,
+  DocumentResult,
+  ExportArtifact,
+} from "../types";
 
-const tabs = ["Text", "Metadata", "Entities", "Exports"] as const;
-type Tab = (typeof tabs)[number];
+const primaryTabs = [
+  "Analysis",
+  "Text",
+  "Metadata",
+  "Entities",
+  "Exports",
+] as const;
+const debugTab = "Debug" as const;
+type Tab = (typeof primaryTabs)[number] | typeof debugTab;
 
 export function DocumentWorkbench() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [apiBaseUrl, setApiBaseUrl] = useLocalStorage(
     "udw.apiBaseUrl",
     appConfig.apiBaseUrl,
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>("Text");
+  const [activeTab, setActiveTab] = useState<Tab>("Analysis");
   const [isDragging, setIsDragging] = useState(false);
+  const debugEnabled = useMemo(
+    () => new URLSearchParams(window.location.search).get("debug") === "1",
+    [],
+  );
 
   const healthQuery = useQuery({
     queryKey: ["health", apiBaseUrl],
@@ -45,8 +67,16 @@ export function DocumentWorkbench() {
   });
 
   const processMutation = useMutation({
-    mutationFn: (file: File) => processDocument(apiBaseUrl, file),
-    onSuccess: () => setActiveTab("Text"),
+    mutationFn: (file: File) => {
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      return processDocument(apiBaseUrl, file, controller.signal);
+    },
+    onSuccess: () => setActiveTab("Analysis"),
+    onSettled: () => {
+      abortControllerRef.current = null;
+    },
   });
 
   const result = processMutation.data;
@@ -70,8 +100,10 @@ export function DocumentWorkbench() {
   function handleFiles(files: FileList | null) {
     const file = files?.item(0);
     if (file) {
+      abortControllerRef.current?.abort();
       setSelectedFile(file);
       processMutation.reset();
+      setActiveTab("Analysis");
     }
   }
 
@@ -85,6 +117,10 @@ export function DocumentWorkbench() {
     if (selectedFile) {
       processMutation.mutate(selectedFile);
     }
+  }
+
+  function cancelProcessing() {
+    abortControllerRef.current?.abort();
   }
 
   return (
@@ -224,27 +260,37 @@ export function DocumentWorkbench() {
                 <span className="text-xs text-slate-600">Drop file</span>
               )}
             </button>
-            <button
-              type="button"
-              disabled={!selectedFile || processMutation.isPending}
-              onClick={submit}
-              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
+            <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
+              <button
+                type="button"
+                disabled={!selectedFile || processMutation.isPending}
+                onClick={submit}
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {processMutation.isPending ? (
+                  <Loader2
+                    size={18}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <ScanText size={18} aria-hidden="true" />
+                )}
+                {processMutation.isPending ? "Processing" : "Process"}
+              </button>
               {processMutation.isPending ? (
-                <Loader2
-                  size={18}
-                  className="animate-spin"
-                  aria-hidden="true"
-                />
-              ) : (
-                <ScanText size={18} aria-hidden="true" />
-              )}
-              Process
-            </button>
+                <button
+                  type="button"
+                  onClick={cancelProcessing}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-bold text-slate-700 transition hover:border-red-400 hover:text-red-700"
+                >
+                  <XCircle size={18} aria-hidden="true" />
+                  Cancel
+                </button>
+              ) : null}
+            </div>
             {processMutation.isError ? (
-              <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-                {processMutation.error.message}
-              </p>
+              <ProcessingError error={processMutation.error} />
             ) : null}
           </section>
         </aside>
@@ -256,10 +302,11 @@ export function DocumentWorkbench() {
               <h2 className="text-sm font-bold">Result</h2>
             </div>
             {result ? (
-              <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                 <span>{result.filename}</span>
                 <span>{formatBytes(result.size_bytes)}</span>
                 <span>{formatDuration(result.processing_ms)}</span>
+                <ConfidenceBadge confidence={result.analysis.confidence} />
               </div>
             ) : null}
           </div>
@@ -268,6 +315,7 @@ export function DocumentWorkbench() {
             <ResultView
               result={result}
               activeTab={activeTab}
+              debugEnabled={debugEnabled}
               onTabChange={setActiveTab}
             />
           ) : (
@@ -304,12 +352,16 @@ function Metric({ label, value }: { label: string; value: string }) {
 function ResultView({
   result,
   activeTab,
+  debugEnabled,
   onTabChange,
 }: {
   result: DocumentResult;
   activeTab: Tab;
+  debugEnabled: boolean;
   onTabChange: (tab: Tab) => void;
 }) {
+  const visibleTabs = debugEnabled ? [...primaryTabs, debugTab] : primaryTabs;
+
   return (
     <div>
       <div
@@ -317,7 +369,7 @@ function ResultView({
         role="tablist"
         aria-label="Result tabs"
       >
-        {tabs.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -335,11 +387,170 @@ function ResultView({
         ))}
       </div>
       <div className="p-4">
+        {activeTab === "Analysis" ? <AnalysisTab result={result} /> : null}
         {activeTab === "Text" ? <TextTab result={result} /> : null}
         {activeTab === "Metadata" ? <MetadataTab result={result} /> : null}
         {activeTab === "Entities" ? <EntitiesTab result={result} /> : null}
         {activeTab === "Exports" ? <ExportsTab result={result} /> : null}
+        {activeTab === "Debug" && debugEnabled ? (
+          <DebugTab result={result} />
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function AnalysisTab({ result }: { result: DocumentResult }) {
+  const confidenceEntries = Object.entries(result.confidence).sort(
+    ([left], [right]) => left.localeCompare(right),
+  );
+
+  return (
+    <div className="space-y-4">
+      <section className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-md border border-slate-200 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase text-slate-500">
+                Detected shape
+              </p>
+              <h3 className="mt-1 text-xl font-bold">
+                {result.analysis.shape_label}
+              </h3>
+              <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                {result.analysis.strategy.replaceAll("_", " ")}
+              </p>
+            </div>
+            <ConfidenceBadge confidence={result.analysis.confidence} />
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <InfoPill
+              icon={<FileText size={14} />}
+              label={result.analysis.shape}
+            />
+            <InfoPill
+              icon={<Gauge size={14} />}
+              label={`${result.analysis.text_bytes.toLocaleString()} text bytes`}
+            />
+            {result.analysis.page_count > 0 ? (
+              <InfoPill
+                icon={<FileArchive size={14} />}
+                label={`${result.analysis.page_count} pages`}
+              />
+            ) : null}
+            {result.analysis.needs_ocr ? (
+              <InfoPill icon={<ScanText size={14} />} label="OCR expected" />
+            ) : null}
+            {result.analysis.language_hint !== "unknown" ? (
+              <InfoPill
+                icon={<Tags size={14} />}
+                label={`${result.analysis.language_hint}/${result.analysis.script_hint}`}
+              />
+            ) : null}
+          </div>
+
+          {result.analysis.evidence.length > 0 ? (
+            <div className="mt-4">
+              <p className="text-xs font-bold uppercase text-slate-500">
+                Evidence
+              </p>
+              <ChipList values={result.analysis.evidence} />
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-md border border-slate-200 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-bold">
+            <ShieldCheck size={16} aria-hidden="true" />
+            Confidence
+          </h3>
+          <div className="mt-3 space-y-2">
+            {confidenceEntries.map(([key, confidence]) => (
+              <div
+                key={key}
+                className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2"
+              >
+                <span className="text-sm font-semibold capitalize text-slate-700">
+                  {key.replaceAll("_", " ")}
+                </span>
+                <ConfidenceBadge confidence={confidence} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {result.anomalies.length > 0 ||
+      result.analysis.expected_actions.length > 0 ? (
+        <section className="grid gap-3 lg:grid-cols-2">
+          <AnomalyList anomalies={result.anomalies} />
+          <section className="rounded-md border border-slate-200 p-4">
+            <h3 className="flex items-center gap-2 text-sm font-bold">
+              <CircleAlert size={16} aria-hidden="true" />
+              Next steps
+            </h3>
+            <ul className="mt-3 space-y-2 text-sm text-slate-700">
+              {result.analysis.expected_actions.map((action) => (
+                <li key={action} className="rounded-md bg-slate-50 px-3 py-2">
+                  {action}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </section>
+      ) : null}
+
+      {result.analysis.table.detected ? (
+        <section className="rounded-md border border-slate-200 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-bold">
+            <BarChart3 size={16} aria-hidden="true" />
+            Table inference
+          </h3>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <Metric
+              label="Rows sampled"
+              value={`${result.analysis.table.rows}`}
+            />
+            <Metric
+              label="Columns"
+              value={`${result.analysis.table.columns}`}
+            />
+            <Metric
+              label="Delimiter"
+              value={result.analysis.table.delimiter || "unknown"}
+            />
+          </div>
+          <ChipList values={result.analysis.table.header_names} />
+        </section>
+      ) : null}
+
+      {result.analysis.fields.length > 0 ? (
+        <section className="overflow-hidden rounded-md border border-slate-200">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead className="bg-slate-100 text-xs uppercase text-slate-600">
+              <tr>
+                <th className="px-3 py-2">Field</th>
+                <th className="w-36 px-3 py-2">Type</th>
+                <th className="w-36 px-3 py-2">Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.analysis.fields.map((field) => (
+                <tr key={field.name} className="border-t border-slate-200">
+                  <td className="px-3 py-2 font-semibold text-ink">
+                    {field.name}
+                  </td>
+                  <td className="px-3 py-2 text-slate-600">{field.type}</td>
+                  <td className="px-3 py-2">
+                    <ConfidenceBadge confidence={field.confidence} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -433,6 +644,7 @@ function EntitiesTab({ result }: { result: DocumentResult }) {
             <tr>
               <th className="px-3 py-2">Text</th>
               <th className="w-32 px-3 py-2">Label</th>
+              <th className="w-36 px-3 py-2">Confidence</th>
             </tr>
           </thead>
           <tbody>
@@ -446,11 +658,14 @@ function EntitiesTab({ result }: { result: DocumentResult }) {
                     {entity.text}
                   </td>
                   <td className="px-3 py-2 text-slate-600">{entity.label}</td>
+                  <td className="px-3 py-2">
+                    <ConfidenceBadge confidence={entity.confidence} />
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td className="px-3 py-4 text-slate-500" colSpan={2}>
+                <td className="px-3 py-4 text-slate-500" colSpan={3}>
                   No entities
                 </td>
               </tr>
@@ -521,6 +736,135 @@ function ExportButton({ artifact }: { artifact: ExportArtifact }) {
       <span className="text-xs text-slate-600">
         {formatBytes(artifact.size_bytes)}
       </span>
+      <ConfidenceBadge confidence={artifact.confidence} />
     </button>
+  );
+}
+
+function ConfidenceBadge({ confidence }: { confidence: Confidence }) {
+  const className =
+    confidence.label === "high"
+      ? "bg-emerald-50 text-emerald-700"
+      : confidence.label === "medium"
+        ? "bg-amber-50 text-amber-700"
+        : "bg-red-50 text-red-700";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold ${className}`}
+      title={`${Math.round(confidence.score * 100)}% confidence`}
+    >
+      {confidence.label}
+      <span className="tabular">{Math.round(confidence.score * 100)}%</span>
+    </span>
+  );
+}
+
+function InfoPill({ icon, label }: { icon: ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function ChipList({ values }: { values: string[] }) {
+  if (values.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {values.map((value) => (
+        <span
+          key={value}
+          className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700"
+        >
+          {value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function AnomalyList({ anomalies }: { anomalies: Diagnostic[] }) {
+  return (
+    <section className="rounded-md border border-slate-200 p-4">
+      <h3 className="flex items-center gap-2 text-sm font-bold">
+        <AlertTriangle size={16} aria-hidden="true" />
+        Anomalies
+      </h3>
+      <div className="mt-3 space-y-2">
+        {anomalies.length > 0 ? (
+          anomalies.map((anomaly) => (
+            <div
+              key={anomaly.code}
+              className={`rounded-md px-3 py-2 text-sm ${
+                anomaly.severity === "error"
+                  ? "bg-red-50 text-red-800"
+                  : anomaly.severity === "warning"
+                    ? "bg-amber-50 text-amber-800"
+                    : "bg-slate-50 text-slate-700"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold">{anomaly.code}</span>
+                <span className="text-xs font-bold uppercase">
+                  {anomaly.severity}
+                </span>
+              </div>
+              <p className="mt-1">{anomaly.message}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-slate-500">No anomalies detected</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function DebugTab({ result }: { result: DocumentResult }) {
+  const debugPayload = {
+    ...result,
+    outputs: result.outputs.map(({ base64, ...artifact }) => ({
+      ...artifact,
+      base64_length: base64.length,
+    })),
+  };
+
+  return (
+    <pre className="max-h-[560px] overflow-auto rounded-md border border-slate-200 bg-slate-950 p-4 text-xs leading-5 text-slate-100">
+      {JSON.stringify(debugPayload, null, 2)}
+    </pre>
+  );
+}
+
+function ProcessingError({ error }: { error: Error }) {
+  if (error.name === "AbortError") {
+    return (
+      <p className="mt-3 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">
+        Processing cancelled.
+      </p>
+    );
+  }
+
+  if (error instanceof DocumentApiError) {
+    return (
+      <div className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
+        <p className="font-bold">{error.details.what ?? error.message}</p>
+        {error.details.why ? <p className="mt-1">{error.details.why}</p> : null}
+        {error.details.now_what ? (
+          <p className="mt-1 font-semibold">{error.details.now_what}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
+      {error.message}
+    </p>
   );
 }

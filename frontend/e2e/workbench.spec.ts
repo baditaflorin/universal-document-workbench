@@ -22,6 +22,9 @@ test("processes a document through the workbench", async ({ page }) => {
     buffer: Buffer.from("Florin met Ada Lovelace in Bucharest on 8 May 2026."),
   });
   await page.getByRole("button", { name: "Process" }).click();
+  await expect(page.getByText("Unknown document")).toBeVisible();
+  await expect(page.getByText("document shape")).toBeVisible();
+  await page.getByRole("tab", { name: "Entities" }).click();
   await expect(page.getByText("Ada Lovelace")).toBeVisible();
   await page.getByRole("tab", { name: "Exports" }).click();
   await expect(page.getByRole("button", { name: /markdown/i })).toBeVisible();

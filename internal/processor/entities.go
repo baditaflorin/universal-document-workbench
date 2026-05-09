@@ -36,6 +36,7 @@ func (p ExternalProcessor) detectEntities(ctx context.Context, text string) ([]E
 	sort.SliceStable(payload.Entities, func(i, j int) bool {
 		return payload.Entities[i].Start < payload.Entities[j].Start
 	})
+	payload.Entities = assignEntityConfidence(payload.Entities, NewConfidence(0.78))
 	sort.Strings(payload.People)
 	sort.Strings(payload.Dates)
 

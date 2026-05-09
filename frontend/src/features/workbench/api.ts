@@ -1,4 +1,5 @@
 import {
+  apiErrorSchema,
   documentResultSchema,
   healthSchema,
   type DocumentResult,
@@ -17,6 +18,7 @@ export async function fetchHealth(apiBaseUrl: string): Promise<Health> {
 export async function processDocument(
   apiBaseUrl: string,
   file: File,
+  signal?: AbortSignal,
 ): Promise<DocumentResult> {
   const body = new FormData();
   body.set("file", file);
@@ -24,19 +26,38 @@ export async function processDocument(
   const response = await fetch(joinUrl(apiBaseUrl, "/api/v1/documents"), {
     method: "POST",
     body,
+    signal,
   });
 
   const payload = await response.json().catch(() => undefined);
 
   if (!response.ok) {
-    const message =
-      typeof payload?.error?.message === "string"
-        ? payload.error.message
-        : `Processing failed with ${response.status}`;
-    throw new Error(message);
+    const parsed = apiErrorSchema.safeParse(payload);
+    if (parsed.success) {
+      throw new DocumentApiError(parsed.data.error.message, parsed.data.error);
+    }
+    throw new Error(`Processing failed with ${response.status}`);
   }
 
   return documentResultSchema.parse(payload);
+}
+
+export class DocumentApiError extends Error {
+  details: {
+    code: string;
+    message: string;
+    what?: string;
+    why?: string;
+    now_what?: string;
+    severity?: string;
+    retryable?: boolean;
+  };
+
+  constructor(message: string, details: DocumentApiError["details"]) {
+    super(message);
+    this.name = "DocumentApiError";
+    this.details = details;
+  }
 }
 
 function joinUrl(base: string, path: string): string {

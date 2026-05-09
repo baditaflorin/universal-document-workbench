@@ -4,7 +4,7 @@ services:
       context: ..
       dockerfile: Dockerfile
       args:
-        VERSION: 0.1.0
+        VERSION: 0.2.0
         COMMIT: dev
     environment:
       APP_ENV: development
@@ -13,4 +13,3 @@ services:
       - "8080:8080"
     read_only: false
     tmpfs: []
-
