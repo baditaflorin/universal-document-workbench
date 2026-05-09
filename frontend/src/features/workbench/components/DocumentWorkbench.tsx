@@ -46,11 +46,7 @@ import {
   TextPanel,
   WorkspacePanel,
 } from "./WorkbenchPanels";
-import {
-  buildVisibleTabs,
-  copyResultJson,
-  downloadResultJson,
-} from "../view";
+import { buildVisibleTabs, copyResultJson, downloadResultJson } from "../view";
 
 const snapshotStorageKey = "udw.phase3.snapshot";
 
@@ -124,12 +120,15 @@ async function fetchUrlAsFile(sourceUrl: string): Promise<File> {
   }
 
   if (!response.ok) {
-    throw new Error(`The URL returned ${response.status}. Try downloading the file locally and uploading it instead.`);
+    throw new Error(
+      `The URL returned ${response.status}. Try downloading the file locally and uploading it instead.`,
+    );
   }
 
   const blob = await response.blob();
   const pathname = parsed.pathname.split("/").filter(Boolean).pop();
-  const fallbackName = pathname && pathname.length > 0 ? pathname : "remote-document";
+  const fallbackName =
+    pathname && pathname.length > 0 ? pathname : "remote-document";
   const mimeType =
     response.headers.get("content-type")?.split(";")[0] ??
     blob.type ??
@@ -162,7 +161,9 @@ export function DocumentWorkbench() {
     storedSnapshot?.results ?? [],
   );
   const [selectedResultId, setSelectedResultId] = useState<string | null>(
-    storedSnapshot?.selected_result_id ?? storedSnapshot?.results[0]?.id ?? null,
+    storedSnapshot?.selected_result_id ??
+      storedSnapshot?.results[0]?.id ??
+      null,
   );
   const [queuedFiles, setQueuedFiles] = useState<File[]>([]);
   const [pastedText, setPastedText] = useState<string>(
@@ -257,7 +258,9 @@ export function DocumentWorkbench() {
     return healthQuery.data?.status ?? "Unknown";
   }, [healthQuery.data?.status, healthQuery.isError, healthQuery.isLoading]);
 
-  function updateSettings(updater: (current: WorkbenchSettings) => WorkbenchSettings) {
+  function updateSettings(
+    updater: (current: WorkbenchSettings) => WorkbenchSettings,
+  ) {
     setSettings((current) => updater(current));
   }
 
@@ -331,7 +334,10 @@ export function DocumentWorkbench() {
     } catch (error) {
       setNotice({
         tone: "error",
-        message: error instanceof Error ? error.message : "Unable to prepare the selected source.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to prepare the selected source.",
       });
       return;
     }
@@ -389,20 +395,32 @@ export function DocumentWorkbench() {
 
   async function copyCurrentText() {
     if (!currentResult) {
-      setNotice({ tone: "error", message: "Process a document before copying text." });
+      setNotice({
+        tone: "error",
+        message: "Process a document before copying text.",
+      });
       return;
     }
     await copyText(currentResult.text);
-    setNotice({ tone: "success", message: "Extracted text copied to the clipboard." });
+    setNotice({
+      tone: "success",
+      message: "Extracted text copied to the clipboard.",
+    });
   }
 
   async function copyCurrentJson() {
     if (!currentResult) {
-      setNotice({ tone: "error", message: "Process a document before copying JSON." });
+      setNotice({
+        tone: "error",
+        message: "Process a document before copying JSON.",
+      });
       return;
     }
     await copyText(copyResultJson(currentResult));
-    setNotice({ tone: "success", message: "Result JSON copied to the clipboard." });
+    setNotice({
+      tone: "success",
+      message: "Result JSON copied to the clipboard.",
+    });
   }
 
   function exportWorkspaceState() {
@@ -434,7 +452,9 @@ export function DocumentWorkbench() {
       setPastedText(parsed.pasted_text);
       setSourceUrl(parsed.source_url);
       setResults(parsed.results);
-      setSelectedResultId(parsed.selected_result_id ?? parsed.results[0]?.id ?? null);
+      setSelectedResultId(
+        parsed.selected_result_id ?? parsed.results[0]?.id ?? null,
+      );
       setQueuedFiles([]);
       setNotice({
         tone: "success",
@@ -443,7 +463,8 @@ export function DocumentWorkbench() {
     } catch {
       setNotice({
         tone: "error",
-        message: "That state file could not be imported. Make sure it came from this workbench build.",
+        message:
+          "That state file could not be imported. Make sure it came from this workbench build.",
       });
     }
   }
@@ -459,7 +480,10 @@ export function DocumentWorkbench() {
     processMutation.reset();
     setQueueStats({ total: 0, completed: 0, failed: 0 });
     window.localStorage.removeItem(snapshotStorageKey);
-    setNotice({ tone: "success", message: "Workspace cleared. You can start fresh." });
+    setNotice({
+      tone: "success",
+      message: "Workspace cleared. You can start fresh.",
+    });
   }
 
   function loadSample() {
@@ -478,7 +502,8 @@ export function DocumentWorkbench() {
     if (!navigator.clipboard?.readText) {
       setNotice({
         tone: "error",
-        message: "Clipboard read is not available in this browser. Paste into the text area instead.",
+        message:
+          "Clipboard read is not available in this browser. Paste into the text area instead.",
       });
       return;
     }
@@ -514,7 +539,10 @@ export function DocumentWorkbench() {
               Document intake console
             </h1>
           </div>
-          <nav className="flex flex-wrap items-center gap-2" aria-label="Project links">
+          <nav
+            className="flex flex-wrap items-center gap-2"
+            aria-label="Project links"
+          >
             <a
               className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold text-ink transition hover:border-lagoon hover:text-lagoon"
               href={appConfig.repoUrl}
@@ -558,14 +586,21 @@ export function DocumentWorkbench() {
                 {healthQuery.isError ? (
                   <AlertTriangle size={14} aria-hidden="true" />
                 ) : healthQuery.isLoading ? (
-                  <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                  <Loader2
+                    size={14}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
                 ) : (
                   <CheckCircle2 size={14} aria-hidden="true" />
                 )}
                 {healthLabel}
               </span>
             </div>
-            <label className="mt-4 block text-xs font-bold uppercase text-slate-500" htmlFor="apiBaseUrl">
+            <label
+              className="mt-4 block text-xs font-bold uppercase text-slate-500"
+              htmlFor="apiBaseUrl"
+            >
               API URL
             </label>
             <input
@@ -581,8 +616,14 @@ export function DocumentWorkbench() {
               spellCheck={false}
             />
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
-              <Metric label="Version" value={healthQuery.data?.version ?? appConfig.version} />
-              <Metric label="Commit" value={healthQuery.data?.commit ?? appConfig.commit} />
+              <Metric
+                label="Version"
+                value={healthQuery.data?.version ?? appConfig.version}
+              />
+              <Metric
+                label="Commit"
+                value={healthQuery.data?.commit ?? appConfig.commit}
+              />
             </div>
           </section>
 
@@ -658,7 +699,10 @@ export function DocumentWorkbench() {
                 {queuedFiles.length > 0 ? (
                   <ul className="mt-3 space-y-2 text-sm text-slate-700">
                     {queuedFiles.slice(0, 4).map((file) => (
-                      <li key={`${file.name}-${file.size}`} className="rounded-md bg-slate-50 px-3 py-2">
+                      <li
+                        key={`${file.name}-${file.size}`}
+                        className="rounded-md bg-slate-50 px-3 py-2"
+                      >
                         {file.name} · {formatBytes(file.size)}
                       </li>
                     ))}
@@ -693,7 +737,10 @@ export function DocumentWorkbench() {
 
             {sourceMode === "url" ? (
               <div className="mt-4 space-y-3">
-                <label className="block text-xs font-bold uppercase text-slate-500" htmlFor="sourceUrl">
+                <label
+                  className="block text-xs font-bold uppercase text-slate-500"
+                  htmlFor="sourceUrl"
+                >
                   Remote document URL
                 </label>
                 <input
@@ -705,7 +752,9 @@ export function DocumentWorkbench() {
                   spellCheck={false}
                 />
                 <p className="text-xs text-slate-500">
-                  This works when the remote host allows browser fetches. If it does not, download the file locally or paste the rendered text.
+                  This works when the remote host allows browser fetches. If it
+                  does not, download the file locally or paste the rendered
+                  text.
                 </p>
               </div>
             ) : null}
@@ -714,7 +763,8 @@ export function DocumentWorkbench() {
               <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                 <p className="font-bold">{sampleDocument.filename}</p>
                 <p className="mt-2">
-                  A built-in text fixture that exercises entities, dates, currency, and URL extraction.
+                  A built-in text fixture that exercises entities, dates,
+                  currency, and URL extraction.
                 </p>
               </div>
             ) : null}
@@ -727,7 +777,11 @@ export function DocumentWorkbench() {
                 className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
                 {processMutation.isPending ? (
-                  <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+                  <Loader2
+                    size={18}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
                 ) : (
                   <ScanText size={18} aria-hidden="true" />
                 )}
@@ -753,7 +807,9 @@ export function DocumentWorkbench() {
               </div>
             ) : null}
 
-            {processMutation.isError ? <ProcessingError error={processMutation.error} /> : null}
+            {processMutation.isError ? (
+              <ProcessingError error={processMutation.error} />
+            ) : null}
             {notice ? (
               <div
                 className={`mt-3 rounded-md px-3 py-2 text-sm ${
@@ -788,7 +844,10 @@ export function DocumentWorkbench() {
               />
             </label>
 
-            <label className="mt-3 block text-xs font-bold uppercase text-slate-500" htmlFor="historyLimit">
+            <label
+              className="mt-3 block text-xs font-bold uppercase text-slate-500"
+              htmlFor="historyLimit"
+            >
               Saved result history
             </label>
             <select
@@ -848,7 +907,11 @@ export function DocumentWorkbench() {
             <ResultSummary result={currentResult} />
           </div>
 
-          <div className="flex flex-wrap gap-2 border-b border-slate-200 px-4 py-3" role="tablist" aria-label="Result tabs">
+          <div
+            className="flex flex-wrap gap-2 border-b border-slate-200 px-4 py-3"
+            role="tablist"
+            aria-label="Result tabs"
+          >
             {visibleTabs.map((tab) => {
               const disabled = tab !== "Workspace" && !resultAvailable;
               return (
@@ -893,7 +956,9 @@ export function DocumentWorkbench() {
                 onClearWorkspace={clearWorkspace}
               />
             ) : null}
-            {activeTab === "Analysis" && currentResult ? <AnalysisPanel result={currentResult} /> : null}
+            {activeTab === "Analysis" && currentResult ? (
+              <AnalysisPanel result={currentResult} />
+            ) : null}
             {activeTab === "Text" && currentResult ? (
               <TextPanel
                 result={currentResult}
@@ -902,8 +967,12 @@ export function DocumentWorkbench() {
                 }}
               />
             ) : null}
-            {activeTab === "Metadata" && currentResult ? <MetadataPanel result={currentResult} /> : null}
-            {activeTab === "Entities" && currentResult ? <EntitiesPanel result={currentResult} /> : null}
+            {activeTab === "Metadata" && currentResult ? (
+              <MetadataPanel result={currentResult} />
+            ) : null}
+            {activeTab === "Entities" && currentResult ? (
+              <EntitiesPanel result={currentResult} />
+            ) : null}
             {activeTab === "Exports" && currentResult ? (
               <ExportsPanel
                 result={currentResult}
@@ -919,7 +988,11 @@ export function DocumentWorkbench() {
             {activeTab !== "Workspace" && !currentResult ? (
               <div className="grid min-h-[420px] place-items-center p-8 text-center">
                 <div>
-                  <FileArchive size={40} className="mx-auto text-slate-300" aria-hidden="true" />
+                  <FileArchive
+                    size={40}
+                    className="mx-auto text-slate-300"
+                    aria-hidden="true"
+                  />
                   <p className="mt-4 text-sm font-semibold text-slate-500">
                     Process a document first, or restore a saved state file.
                   </p>

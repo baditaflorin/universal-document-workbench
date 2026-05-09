@@ -26,13 +26,11 @@ import type {
 } from "../types";
 import type { SourceMode } from "../state";
 
-export function ResultSummary({
-  result,
-}: {
-  result: DocumentResult | null;
-}) {
+export function ResultSummary({ result }: { result: DocumentResult | null }) {
   if (!result) {
-    return <span className="text-xs text-slate-500">No processed document yet</span>;
+    return (
+      <span className="text-xs text-slate-500">No processed document yet</span>
+    );
   }
 
   return (
@@ -109,15 +107,31 @@ export function WorkspacePanel({
           Session actions
         </h3>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <ActionButton icon={<FileText size={16} />} label="Load sample" onClick={onLoadSample} />
-          <ActionButton icon={<Copy size={16} />} label="Copy text" onClick={onCopyText} />
-          <ActionButton icon={<Copy size={16} />} label="Copy JSON" onClick={onCopyJson} />
+          <ActionButton
+            icon={<FileText size={16} />}
+            label="Load sample"
+            onClick={onLoadSample}
+          />
+          <ActionButton
+            icon={<Copy size={16} />}
+            label="Copy text"
+            onClick={onCopyText}
+          />
+          <ActionButton
+            icon={<Copy size={16} />}
+            label="Copy JSON"
+            onClick={onCopyJson}
+          />
           <ActionButton
             icon={<Download size={16} />}
             label="Export state"
             onClick={onExportState}
           />
-          <ActionButton icon={<Import size={16} />} label="Import state" onClick={onImportState} />
+          <ActionButton
+            icon={<Import size={16} />}
+            label="Import state"
+            onClick={onImportState}
+          />
           <ActionButton
             icon={<AlertTriangle size={16} />}
             label="Start fresh"
@@ -130,13 +144,17 @@ export function WorkspacePanel({
         <h3 className="text-sm font-bold">How this build behaves</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-700">
           <li className="rounded-md bg-slate-50 px-3 py-2">
-            Paste, upload, and sample intake can all be processed into the same backend pipeline.
+            Paste, upload, and sample intake can all be processed into the same
+            backend pipeline.
           </li>
           <li className="rounded-md bg-slate-50 px-3 py-2">
-            State export captures the processed results, settings, active tab, and intake drafts.
+            State export captures the processed results, settings, active tab,
+            and intake drafts.
           </li>
           <li className="rounded-md bg-slate-50 px-3 py-2">
-            Remote URL loading depends on the target allowing browser fetches; when it does not, the UI explains the next step instead of failing silently.
+            Remote URL loading depends on the target allowing browser fetches;
+            when it does not, the UI explains the next step instead of failing
+            silently.
           </li>
         </ul>
       </section>
@@ -176,8 +194,12 @@ export function AnalysisPanel({ result }: { result: DocumentResult }) {
         <div className="rounded-md border border-slate-200 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase text-slate-500">Detected shape</p>
-              <h3 className="mt-1 text-xl font-bold">{result.analysis.shape_label}</h3>
+              <p className="text-xs font-bold uppercase text-slate-500">
+                Detected shape
+              </p>
+              <h3 className="mt-1 text-xl font-bold">
+                {result.analysis.shape_label}
+              </h3>
               <p className="mt-2 max-w-2xl text-sm text-slate-600">
                 {result.analysis.strategy.replaceAll("_", " ")}
               </p>
@@ -186,13 +208,19 @@ export function AnalysisPanel({ result }: { result: DocumentResult }) {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <InfoPill icon={<FileText size={14} />} label={result.analysis.shape} />
+            <InfoPill
+              icon={<FileText size={14} />}
+              label={result.analysis.shape}
+            />
             <InfoPill
               icon={<Gauge size={14} />}
               label={`${result.analysis.text_bytes.toLocaleString()} text bytes`}
             />
             {result.analysis.page_count > 0 ? (
-              <InfoPill icon={<FileArchive size={14} />} label={`${result.analysis.page_count} pages`} />
+              <InfoPill
+                icon={<FileArchive size={14} />}
+                label={`${result.analysis.page_count} pages`}
+              />
             ) : null}
             {result.analysis.needs_ocr ? (
               <InfoPill icon={<ScanText size={14} />} label="OCR expected" />
@@ -207,7 +235,9 @@ export function AnalysisPanel({ result }: { result: DocumentResult }) {
 
           {result.analysis.evidence.length > 0 ? (
             <div className="mt-4">
-              <p className="text-xs font-bold uppercase text-slate-500">Evidence</p>
+              <p className="text-xs font-bold uppercase text-slate-500">
+                Evidence
+              </p>
               <ChipList values={result.analysis.evidence} />
             </div>
           ) : null}
@@ -234,7 +264,8 @@ export function AnalysisPanel({ result }: { result: DocumentResult }) {
         </div>
       </section>
 
-      {result.anomalies.length > 0 || result.analysis.expected_actions.length > 0 ? (
+      {result.anomalies.length > 0 ||
+      result.analysis.expected_actions.length > 0 ? (
         <section className="grid gap-3 lg:grid-cols-2">
           <AnomalyList anomalies={result.anomalies} />
           <section className="rounded-md border border-slate-200 p-4">
@@ -260,8 +291,14 @@ export function AnalysisPanel({ result }: { result: DocumentResult }) {
             Table inference
           </h3>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <Metric label="Rows sampled" value={`${result.analysis.table.rows}`} />
-            <Metric label="Columns" value={`${result.analysis.table.columns}`} />
+            <Metric
+              label="Rows sampled"
+              value={`${result.analysis.table.rows}`}
+            />
+            <Metric
+              label="Columns"
+              value={`${result.analysis.table.columns}`}
+            />
             <Metric
               label="Delimiter"
               value={result.analysis.table.delimiter || "unknown"}
@@ -284,7 +321,9 @@ export function AnalysisPanel({ result }: { result: DocumentResult }) {
             <tbody>
               {result.analysis.fields.map((field) => (
                 <tr key={field.name} className="border-t border-slate-200">
-                  <td className="px-3 py-2 font-semibold text-ink">{field.name}</td>
+                  <td className="px-3 py-2 font-semibold text-ink">
+                    {field.name}
+                  </td>
                   <td className="px-3 py-2 text-slate-600">{field.type}</td>
                   <td className="px-3 py-2">
                     <ConfidenceBadge confidence={field.confidence} />
@@ -362,8 +401,12 @@ export function MetadataPanel({ result }: { result: DocumentResult }) {
           {entries.length > 0 ? (
             entries.map(([key, value]) => (
               <tr key={key} className="border-t border-slate-200">
-                <th className="align-top px-3 py-2 font-semibold text-slate-700">{key}</th>
-                <td className="break-words px-3 py-2 text-slate-600">{value}</td>
+                <th className="align-top px-3 py-2 font-semibold text-slate-700">
+                  {key}
+                </th>
+                <td className="break-words px-3 py-2 text-slate-600">
+                  {value}
+                </td>
               </tr>
             ))
           ) : (
@@ -383,8 +426,16 @@ export function EntitiesPanel({ result }: { result: DocumentResult }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <EntityGroup title="People" icon={<Tags size={16} aria-hidden="true" />} values={result.people} />
-        <EntityGroup title="Dates" icon={<Tags size={16} aria-hidden="true" />} values={result.dates} />
+        <EntityGroup
+          title="People"
+          icon={<Tags size={16} aria-hidden="true" />}
+          values={result.people}
+        />
+        <EntityGroup
+          title="Dates"
+          icon={<Tags size={16} aria-hidden="true" />}
+          values={result.dates}
+        />
       </div>
       <div className="overflow-hidden rounded-md border border-slate-200">
         <table className="w-full border-collapse text-left text-sm">
@@ -402,7 +453,9 @@ export function EntitiesPanel({ result }: { result: DocumentResult }) {
                   key={`${entity.start}-${entity.end}-${index}`}
                   className="border-t border-slate-200"
                 >
-                  <td className="px-3 py-2 font-semibold text-ink">{entity.text}</td>
+                  <td className="px-3 py-2 font-semibold text-ink">
+                    {entity.text}
+                  </td>
                   <td className="px-3 py-2 text-slate-600">{entity.label}</td>
                   <td className="px-3 py-2">
                     <ConfidenceBadge confidence={entity.confidence} />
@@ -445,7 +498,11 @@ export function ExportsPanel({
           label="Download state JSON"
           onClick={onDownloadState}
         />
-        <ActionButton icon={<Copy size={16} />} label="Copy result JSON" onClick={onCopyJson} />
+        <ActionButton
+          icon={<Copy size={16} />}
+          label="Copy result JSON"
+          onClick={onCopyJson}
+        />
       </div>
     </div>
   );
@@ -496,11 +553,14 @@ export function HistoryPanel({
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-bold text-ink">{item.filename}</span>
+                <span className="text-sm font-bold text-ink">
+                  {item.filename}
+                </span>
                 <ConfidenceBadge confidence={item.analysis.confidence} />
               </div>
               <p className="mt-1 text-xs text-slate-600">
-                {formatBytes(item.size_bytes)} · {formatDuration(item.processing_ms)} ·{" "}
+                {formatBytes(item.size_bytes)} ·{" "}
+                {formatDuration(item.processing_ms)} ·{" "}
                 {item.analysis.shape_label}
               </p>
             </button>
@@ -554,7 +614,9 @@ function ExportButton({ artifact }: { artifact: ExportArtifact }) {
         <Download size={16} aria-hidden="true" />
         {artifact.format}
       </span>
-      <span className="text-xs text-slate-600">{formatBytes(artifact.size_bytes)}</span>
+      <span className="text-xs text-slate-600">
+        {formatBytes(artifact.size_bytes)}
+      </span>
       <ConfidenceBadge confidence={artifact.confidence} />
     </button>
   );
@@ -583,7 +645,9 @@ export function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-2">
       <dt className="font-bold uppercase text-slate-500">{label}</dt>
-      <dd className="tabular mt-1 truncate font-mono text-[11px] text-ink">{value}</dd>
+      <dd className="tabular mt-1 truncate font-mono text-[11px] text-ink">
+        {value}
+      </dd>
     </div>
   );
 }
@@ -671,7 +735,9 @@ function AnomalyList({ anomalies }: { anomalies: Diagnostic[] }) {
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold">{anomaly.code}</span>
-                <span className="text-xs font-bold uppercase">{anomaly.severity}</span>
+                <span className="text-xs font-bold uppercase">
+                  {anomaly.severity}
+                </span>
               </div>
               <p className="mt-1">{anomaly.message}</p>
             </div>

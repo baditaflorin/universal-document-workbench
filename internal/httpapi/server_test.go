@@ -18,8 +18,8 @@ import (
 func TestDocumentUpload(t *testing.T) {
 	t.Parallel()
 
-	server := NewServer(testConfig(t), processor.StubProcessor{Version: "0.2.0", Commit: "test"}, version.Info{
-		Version: "0.2.0",
+	server := NewServer(testConfig(t), processor.StubProcessor{Version: "0.3.0", Commit: "test"}, version.Info{
+		Version: "0.3.0",
 		Commit:  "test",
 	}, nil)
 
@@ -61,8 +61,8 @@ func TestDocumentUpload(t *testing.T) {
 func TestHealth(t *testing.T) {
 	t.Parallel()
 
-	server := NewServer(testConfig(t), processor.StubProcessor{Version: "0.2.0", Commit: "test"}, version.Info{
-		Version: "0.2.0",
+	server := NewServer(testConfig(t), processor.StubProcessor{Version: "0.3.0", Commit: "test"}, version.Info{
+		Version: "0.3.0",
 		Commit:  "test",
 	}, nil)
 
@@ -78,8 +78,8 @@ func TestHealth(t *testing.T) {
 func TestDocumentUploadEmptyFileIsAnalyzed(t *testing.T) {
 	t.Parallel()
 
-	server := NewServer(testConfig(t), processor.StubProcessor{Version: "0.2.0", Commit: "test"}, version.Info{
-		Version: "0.2.0",
+	server := NewServer(testConfig(t), processor.StubProcessor{Version: "0.3.0", Commit: "test"}, version.Info{
+		Version: "0.3.0",
 		Commit:  "test",
 	}, nil)
 

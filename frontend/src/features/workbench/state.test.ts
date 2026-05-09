@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildWorkbenchSnapshot, trimResults, workbenchSnapshotSchema } from "./state";
+import {
+  buildWorkbenchSnapshot,
+  trimResults,
+  workbenchSnapshotSchema,
+} from "./state";
 import type { DocumentResult } from "./types";
 
 function buildResult(id: string, filename: string): DocumentResult {

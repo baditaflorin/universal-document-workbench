@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_VERSION="${APP_VERSION:-0.2.0}"
+APP_VERSION="${APP_VERSION:-0.3.0}"
 GIT_COMMIT="${GIT_COMMIT:-$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || echo dev)}"
 API_BASE_URL="${VITE_API_BASE_URL:-http://localhost:8080}"
 OUT_DIR="${VITE_OUT_DIR:-$ROOT_DIR/docs}"

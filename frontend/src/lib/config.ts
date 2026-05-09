@@ -1,6 +1,6 @@
 export const appConfig = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080",
-  version: import.meta.env.VITE_APP_VERSION ?? "0.2.0",
+  version: import.meta.env.VITE_APP_VERSION ?? "0.3.0",
   commit: import.meta.env.VITE_GIT_COMMIT ?? "dev",
   repoUrl: "https://github.com/baditaflorin/universal-document-workbench",
   paypalUrl: "https://www.paypal.com/paypalme/florinbadita",
