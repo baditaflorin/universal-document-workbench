@@ -1,19 +1,4 @@
 {
-  "name": "universal-document-workbench-frontend",
-  "private": true,
-  "version": "0.3.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
-    "preview": "vite preview --host 0.0.0.0",
-    "lint": "eslint .",
-    "fmt": "prettier --write .",
-    "fmt:check": "prettier --check .",
-    "test": "vitest run",
-    "e2e": "playwright test"
-  },
   "dependencies": {
     "@tanstack/react-query": "^5.100.9",
     "lucide-react": "^0.468.0",
@@ -40,6 +25,22 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.59.2",
     "vite": "^5.4.21",
-    "vitest": "^2.1.9"
-  }
+    "vitest": "4.1.0"
+  },
+  "name": "universal-document-workbench-frontend",
+  "overrides": {},
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit \u0026\u0026 vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --host 0.0.0.0",
+    "lint": "eslint .",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "type": "module",
+  "version": "0.3.0"
 }
