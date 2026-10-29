@@ -3,7 +3,7 @@ module github.com/baditaflorin/universal-document-workbench
 go 1.26.2
 
 require (
-	github.com/go-chi/chi/v5 v5.2.5
+	github.com/go-chi/chi/v5 v5.4.0
 	github.com/go-chi/cors v1.2.2
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/kelseyhightower/envconfig v1.4.0
